@@ -1,0 +1,57 @@
+<project name="php-ci-test" default="default">
+  <property environment="env"/>
+  <property file="user.properties" />
+  <property file="build.properties" />
+
+  <!-- ######################################################################################### -->
+  <!-- ## TOP LEVEL TARGETS ## -->
+  <!-- ######################################################################################### -->
+  <!-- default -->
+  <target name="default" unless="default.notrequired" description="">
+    <antcall target="all-tests" />
+  </target>
+
+  <!-- clean -->
+  <target name="clean" unless="clean.notrequired" description="Clean build output">
+    <antcall target="clean-bin" />
+  </target>
+
+  <!-- setup for phpunit tests -->
+  <target name="setup-phpunit-tests" unless="setup-phpunit-tests.notRequired">
+    <mkdir dir="${bin.dir}" />
+    <mkdir dir="${bin.dir}/logs" />
+    <mkdir dir="${bin.dir}/coverage" />
+  </target>
+
+  <!-- all-tests -->
+  <target name="all-tests" unless="all-tests.notrequired" depends="setup-phpunit-tests" description="Run all tests">
+    <exec executable="${phpunit.php}" failonerror="true">
+        <arg line="--log-junit ${bin.dir}/logs/phpunit.xml" />
+    </exec>
+  </target>
+
+  <!-- all-tests-cc -->
+  <target name="all-tests-cc" unless="all-tests-cc.notrequired" depends="setup-phpunit-tests,php-codesniffer-cc" description="Run all test for cruisecontrol (xml output)">
+    <exec executable="${phpunit.php}" dir="${src.dir}" failonerror="true">
+        <arg line="--log-junit ${bin.dir}/logs/phpunit.xml --coverage-html ${bin.dir}/coverage --coverage-clover ${bin.dir}/logs/phpunit.coverage.xml -d memory_limit=200M" />
+    </exec>
+  </target>
+
+  <target name="php-codesniffer">
+    <exec executable="phpcs" dir="${basedir}/src" >
+      <arg line="-n --standard=PSR2 ."/>
+    </exec>
+  </target>
+  <target name="php-codesniffer-cc" depends="setup-phpunit-tests">
+    <exec executable="phpcs"
+      dir="${basedir}/src"
+      output="${bin.dir}/logs/checkstyle.xml">
+      <arg line="--report=checkstyle --standard=PSR2 ."/>
+    </exec>
+  </target>
+
+  <!-- clean-bin -->
+  <target name="clean-bin" unless="clean-bin.notrequired">
+    <delete dir="${bin.dir}" failOnError="true" includeemptydirs="false" />
+  </target>
+</project>
